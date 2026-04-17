@@ -90,10 +90,68 @@ writeCommand.SetHandler(async (host, port, unit, start, value) =>
     }
 }, hostOption, portOption, unitIdOption, startAddressOption, writeValueOption);
 
+var intervalOption = new Option<int>(
+    name: "--interval",
+    description: "Polling interval in seconds",
+    getDefaultValue: () => 5);
+
+var pollCommand = new Command("poll", "Continuously read holding registers at an interval")
+{
+    hostOption, portOption, unitIdOption, startAddressOption, countOption, jsonOption, intervalOption,
+};
+
+pollCommand.SetHandler(async (host, port, unit, start, count, json, interval) =>
+{
+    using var loggerFactory = LoggerFactory.Create(builder =>
+        builder.AddConsole().SetMinimumLevel(LogLevel.Information));
+    var logger = loggerFactory.CreateLogger<Program>();
+
+    var client = new ModbusClient(host, port, logger);
+    var pollCount = 0;
+
+    Console.CancelKeyPress += (_, e) =>
+    {
+        e.Cancel = true;
+        Console.WriteLine($"\nstopped after {pollCount} polls");
+        Environment.Exit(0);
+    };
+
+    Console.WriteLine($"polling {host}:{port} every {interval}s (press Ctrl+C to stop)");
+
+    while (true)
+    {
+        try
+        {
+            var values = await client.ReadHoldingRegistersAsync(unit, start, count);
+            pollCount++;
+            var timestamp = DateTime.Now.ToString("HH:mm:ss");
+
+            if (json)
+            {
+                var output = new RegisterReadResult(host, port, unit, start, values);
+                Console.WriteLine($"[{timestamp}] {output.ToJson()}");
+            }
+            else
+            {
+                var vals = string.Join(" ", values.Select(v => v.ToString()));
+                Console.WriteLine($"[{timestamp}] registers {start}..{start + count - 1}: {vals}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] error: {ex.Message}");
+        }
+
+        await Task.Delay(interval * 1000);
+    }
+}, hostOption, portOption, unitIdOption, startAddressOption, countOption, jsonOption, intervalOption);
+
+
 var rootCommand = new RootCommand("wirecap — Modbus TCP client for industrial device polling")
 {
     readCommand,
     writeCommand,
+    pollCommand,
 };
 
 return await rootCommand.InvokeAsync(args);
