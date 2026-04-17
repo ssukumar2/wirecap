@@ -62,9 +62,38 @@ readCommand.SetHandler(async (host, port, unit, start, count, json) =>
     }
 }, hostOption, portOption, unitIdOption, startAddressOption, countOption, jsonOption);
 
+var writeValueOption = new Option<ushort>(
+    name: "--value",
+    description: "Value to write to the register");
+
+var writeCommand = new Command("write", "Write a value to a holding register")
+{
+    hostOption, portOption, unitIdOption, startAddressOption, writeValueOption,
+};
+
+writeCommand.SetHandler(async (host, port, unit, start, value) =>
+{
+    using var loggerFactory = LoggerFactory.Create(builder =>
+        builder.AddConsole().SetMinimumLevel(LogLevel.Information));
+    var logger = loggerFactory.CreateLogger<Program>();
+
+    var client = new ModbusClient(host, port, logger);
+    try
+    {
+        await client.WriteSingleRegisterAsync(unit, start, value);
+        Console.WriteLine($"wrote value {value} (0x{value:X4}) to register {start}");
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "failed to write register");
+        Environment.Exit(1);
+    }
+}, hostOption, portOption, unitIdOption, startAddressOption, writeValueOption);
+
 var rootCommand = new RootCommand("wirecap — Modbus TCP client for industrial device polling")
 {
     readCommand,
+    writeCommand,
 };
 
 return await rootCommand.InvokeAsync(args);

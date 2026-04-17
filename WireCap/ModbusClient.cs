@@ -35,4 +35,22 @@ public class ModbusClient
         _logger.LogInformation("read {Count} registers successfully", values.Length);
         return values;
     }
+
+    public async Task WriteSingleRegisterAsync(
+        byte unitId, ushort address, ushort value)
+    {
+        _logger.LogInformation(
+            "connecting to {Host}:{Port} (unit={Unit}, writing {Value} to address {Address})",
+            _host, _port, unitId, value, address);
+
+        using var tcpClient = new TcpClient();
+        await tcpClient.ConnectAsync(_host, _port);
+
+        var factory = new ModbusFactory();
+        var master = factory.CreateMaster(tcpClient);
+
+        await master.WriteSingleRegisterAsync(unitId, address, value);
+
+        _logger.LogInformation("wrote register {Address} = {Value} successfully", address, value);
+    }
 }
