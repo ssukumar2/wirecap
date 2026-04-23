@@ -1,3 +1,5 @@
+![.NET Build](https://github.com/ssukumar2/wirecap/actions/workflows/dotnet.yml/badge.svg)
+
 # wirecap
 
 A Modbus TCP client for polling industrial devices, written in .NET 8 and C#. Reads holding registers from PLCs, solar inverters, energy meters, and other Modbus-speaking hardware. Supports plain text and structured JSON output.
