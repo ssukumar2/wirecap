@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 
 namespace WireCap
@@ -6,8 +5,8 @@ namespace WireCap
     public class RegisterDefinition
     {
         public ushort Address { get; set; }
-        public string Name { get; set; }
-        public string Unit { get; set; }
+        public string Name { get; set; } = "";
+        public string Unit { get; set; } = "";
         public double ScaleFactor { get; set; } = 1.0;
         public int RegisterCount { get; set; } = 1;
     }
@@ -23,7 +22,7 @@ namespace WireCap
             new() { Address = 4, Name = "pv_voltage", Unit = "V", ScaleFactor = 0.1 },
             new() { Address = 5, Name = "pv_current", Unit = "A", ScaleFactor = 0.01 },
             new() { Address = 6, Name = "pv_power", Unit = "W", ScaleFactor = 1.0 },
-            new() { Address = 7, Name = "temperature", Unit = "°C", ScaleFactor = 0.1 },
+            new() { Address = 7, Name = "temperature", Unit = "C", ScaleFactor = 0.1 },
             new() { Address = 8, Name = "daily_energy", Unit = "kWh", ScaleFactor = 0.1 },
             new() { Address = 9, Name = "total_energy", Unit = "kWh", ScaleFactor = 0.1, RegisterCount = 2 },
         };
@@ -46,8 +45,8 @@ namespace WireCap
             new() { Address = 1, Name = "pack_current", Unit = "A", ScaleFactor = 0.01 },
             new() { Address = 2, Name = "soc", Unit = "%", ScaleFactor = 0.1 },
             new() { Address = 3, Name = "soh", Unit = "%", ScaleFactor = 0.1 },
-            new() { Address = 4, Name = "cell_temp_max", Unit = "°C", ScaleFactor = 0.1 },
-            new() { Address = 5, Name = "cell_temp_min", Unit = "°C", ScaleFactor = 0.1 },
+            new() { Address = 4, Name = "cell_temp_max", Unit = "C", ScaleFactor = 0.1 },
+            new() { Address = 5, Name = "cell_temp_min", Unit = "C", ScaleFactor = 0.1 },
             new() { Address = 6, Name = "cell_voltage_max", Unit = "mV", ScaleFactor = 1.0 },
             new() { Address = 7, Name = "cell_voltage_min", Unit = "mV", ScaleFactor = 1.0 },
             new() { Address = 8, Name = "charge_cycles", Unit = "", ScaleFactor = 1.0 },

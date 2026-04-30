@@ -9,15 +9,15 @@ namespace WireCap
     public class PollScheduler
     {
         private readonly ModbusClient _client;
-        private readonly ILogger _logger;
+        private readonly ILogger? _logger;
         private readonly List<RegisterDefinition> _registers;
         private readonly int _intervalMs;
-        private CancellationTokenSource _cts;
+        private CancellationTokenSource? _cts;
 
-        public event Action<string, double, string> OnReading;
+        public event Action<string, double, string>? OnReading;
 
         public PollScheduler(ModbusClient client, List<RegisterDefinition> registers,
-                             int intervalMs = 5000, ILogger logger = null)
+                             int intervalMs = 5000, ILogger? logger = null)
         {
             _client = client;
             _registers = registers;
@@ -36,12 +36,13 @@ namespace WireCap
                 {
                     try
                     {
-                        var result = _client.ReadHoldingRegisters(reg.Address, (ushort)reg.RegisterCount);
-                        if (result != null && result.Registers.Length > 0)
+                        var values = await _client.ReadHoldingRegistersAsync(
+                            1, reg.Address, (ushort)reg.RegisterCount);
+                        if (values != null && values.Length > 0)
                         {
-                            double value = result.Registers[0] * reg.ScaleFactor;
-                            OnReading?.Invoke(reg.Name, value, reg.Unit);
-                            _logger?.LogDebug("{Name}={Value}{Unit}", reg.Name, value, reg.Unit);
+                            double scaled = values[0] * reg.ScaleFactor;
+                            OnReading?.Invoke(reg.Name, scaled, reg.Unit);
+                            _logger?.LogDebug("{Name}={Value}{Unit}", reg.Name, scaled, reg.Unit);
                         }
                     }
                     catch (Exception ex)
