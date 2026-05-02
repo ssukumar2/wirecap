@@ -5,6 +5,17 @@ using System.Diagnostics;
 
 namespace WireCap
 {
+    public class DiagnosticResult
+    {
+        public string Host { get; set; } = "";
+        public int Port { get; set; }
+        public bool PingReachable { get; set; }
+        public long PingMs { get; set; }
+        public bool TcpConnected { get; set; }
+        public long LatencyMs { get; set; }
+        public string? Error { get; set; }
+    }
+
     public static class Diagnostics
     {
         public static DiagnosticResult TestConnection(string host, int port, int timeoutMs = 3000)
@@ -12,7 +23,6 @@ namespace WireCap
             var result = new DiagnosticResult { Host = host, Port = port };
             var sw = Stopwatch.StartNew();
 
-            // TCP connection test
             try
             {
                 using var client = new TcpClient();
@@ -35,7 +45,6 @@ namespace WireCap
                 result.Error = ex.InnerException?.Message ?? ex.Message;
             }
 
-            // Ping test
             try
             {
                 using var ping = new Ping();
@@ -57,16 +66,5 @@ namespace WireCap
             Console.WriteLine($"  Ping:  {(r.PingReachable ? $"OK ({r.PingMs}ms)" : "FAILED")}");
             Console.WriteLine($"  TCP:   {(r.TcpConnected ? $"OK ({r.LatencyMs}ms)" : $"FAILED ({r.Error})")}");
         }
-    }
-
-    public class DiagnosticResult
-    {
-        public string Host { get; set; }
-        public int Port { get; set; }
-        public bool PingReachable { get; set; }
-        public long PingMs { get; set; }
-        public bool TcpConnected { get; set; }
-        public long LatencyMs { get; set; }
-        public string Error { get; set; }
     }
 }
