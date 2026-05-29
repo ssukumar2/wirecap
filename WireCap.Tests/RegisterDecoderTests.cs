@@ -23,3 +23,24 @@ public class RegisterDecoderTests
     public void ToUInt32_throws_when_too_short() =>
         Assert.Throws<ArgumentOutOfRangeException>(() => RegisterDecoder.ToUInt32(new ushort[] { 0x0001 }));
 }
+
+public class RegisterDecoder64Tests
+{
+    [Fact]
+    public void ToUInt64_HighWordFirst_combines() =>
+        Assert.Equal(0x0011223344556677ul,
+            RegisterDecoder.ToUInt64(new ushort[] { 0x0011, 0x2233, 0x4455, 0x6677 }));
+
+    [Fact]
+    public void ToInt64_handles_negative() =>
+        Assert.Equal(-1L, RegisterDecoder.ToInt64(new ushort[] { 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF }));
+
+    [Fact]
+    public void ToDouble_decodes_ieee754() =>
+        Assert.Equal(1.0, RegisterDecoder.ToDouble(new ushort[] { 0x3FF0, 0x0000, 0x0000, 0x0000 }), 9);
+
+    [Fact]
+    public void ToUInt64_throws_when_too_short() =>
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => RegisterDecoder.ToUInt64(new ushort[] { 0x0001, 0x0002 }));
+}
