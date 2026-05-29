@@ -4,7 +4,7 @@ using NModbus;
 
 namespace WireCap;
 
-public class ModbusClient
+public partial class ModbusClient
 {
     private readonly string _host;
     private readonly int _port;
@@ -17,22 +17,30 @@ public class ModbusClient
         _logger = logger;
     }
 
+    private async Task<T> WithMasterAsync<T>(Func<IModbusMaster, Task<T>> action)
+    {
+        using var tcpClient = new TcpClient();
+        await tcpClient.ConnectAsync(_host, _port);
+        var master = new ModbusFactory().CreateMaster(tcpClient);
+        return await action(master);
+    }
+
+    private async Task WithMasterAsync(Func<IModbusMaster, Task> action)
+    {
+        using var tcpClient = new TcpClient();
+        await tcpClient.ConnectAsync(_host, _port);
+        var master = new ModbusFactory().CreateMaster(tcpClient);
+        await action(master);
+    }
+
     public async Task<ushort[]> ReadHoldingRegistersAsync(
         byte unitId, ushort startAddress, ushort count)
     {
         _logger.LogInformation(
             "connecting to {Host}:{Port} (unit={Unit}, start={Start}, count={Count})",
             _host, _port, unitId, startAddress, count);
-
-        using var tcpClient = new TcpClient();
-        await tcpClient.ConnectAsync(_host, _port);
-
-        var factory = new ModbusFactory();
-        var master = factory.CreateMaster(tcpClient);
-
-        var values = await master.ReadHoldingRegistersAsync(unitId, startAddress, count);
-
-        _logger.LogInformation("read {Count} registers successfully", values.Length);
+        var values = await WithMasterAsync(m => m.ReadHoldingRegistersAsync(unitId, startAddress, count));
+        _logger.LogInformation("read {Count} holding registers successfully", values.Length);
         return values;
     }
 
@@ -42,15 +50,7 @@ public class ModbusClient
         _logger.LogInformation(
             "connecting to {Host}:{Port} (unit={Unit}, writing {Value} to address {Address})",
             _host, _port, unitId, value, address);
-
-        using var tcpClient = new TcpClient();
-        await tcpClient.ConnectAsync(_host, _port);
-
-        var factory = new ModbusFactory();
-        var master = factory.CreateMaster(tcpClient);
-
-        await master.WriteSingleRegisterAsync(unitId, address, value);
-
+        await WithMasterAsync(m => m.WriteSingleRegisterAsync(unitId, address, value));
         _logger.LogInformation("wrote register {Address} = {Value} successfully", address, value);
     }
 }
