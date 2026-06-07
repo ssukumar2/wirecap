@@ -1,4 +1,3 @@
-using System.Net.Sockets;
 using Microsoft.Extensions.Logging;
 using NModbus;
 
@@ -9,28 +8,26 @@ public partial class ModbusClient
     private readonly string _host;
     private readonly int _port;
     private readonly ILogger _logger;
+    private readonly IModbusConnectionFactory _connectionFactory;
 
-    public ModbusClient(string host, int port, ILogger logger)
+    public ModbusClient(string host, int port, ILogger logger, IModbusConnectionFactory? connectionFactory = null)
     {
         _host = host;
         _port = port;
         _logger = logger;
+        _connectionFactory = connectionFactory ?? new TcpModbusConnectionFactory();
     }
 
     private async Task<T> WithMasterAsync<T>(Func<IModbusMaster, Task<T>> action)
     {
-        using var tcpClient = new TcpClient();
-        await tcpClient.ConnectAsync(_host, _port);
-        var master = new ModbusFactory().CreateMaster(tcpClient);
-        return await action(master);
+        using var connection = await _connectionFactory.ConnectAsync(_host, _port);
+        return await action(connection.Master);
     }
 
     private async Task WithMasterAsync(Func<IModbusMaster, Task> action)
     {
-        using var tcpClient = new TcpClient();
-        await tcpClient.ConnectAsync(_host, _port);
-        var master = new ModbusFactory().CreateMaster(tcpClient);
-        await action(master);
+        using var connection = await _connectionFactory.ConnectAsync(_host, _port);
+        await action(connection.Master);
     }
 
     public async Task<ushort[]> ReadHoldingRegistersAsync(
